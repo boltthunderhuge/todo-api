@@ -15,21 +15,23 @@ app.get('/', function(req, res) {
 
 app.get('/todos', function(req, res) {
 	var queryParams = req.query;
-	var filteredTodos;
+	var filteredTodos = todos;
+
+	if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
+		filteredTodos = _.filter(filteredTodos, function(todo) {
+			return todo.description.toLowerCase().includes(queryParams.q.toLowerCase());
+		});
+	}
 
 	if (queryParams.hasOwnProperty('completed')) {
 		if (queryParams.completed === 'true') {
-			console.log('completed ' + queryParams.completed);
-
-			filteredTodos = _.where(todos, {completed: true});
+			filteredTodos = _.where(filteredTodos, {completed: true});
 		} else if (queryParams.completed === 'false') {
-			filteredTodos = _.where(todos, {completed: false});
+			filteredTodos = _.where(filteredTodos, {completed: false});
 		}
-
-		return res.json(filteredTodos);
 	}
 
-	res.json(todos);
+	res.json(filteredTodos);
 });
 
 app.get('/todos/:id', function(req, res) {
