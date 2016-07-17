@@ -25,9 +25,13 @@ app.get('/todos', function(req, res) {
 
 	if (queryParams.hasOwnProperty('completed')) {
 		if (queryParams.completed === 'true') {
-			filteredTodos = _.where(filteredTodos, {completed: true});
+			filteredTodos = _.where(filteredTodos, {
+				completed: true
+			});
 		} else if (queryParams.completed === 'false') {
-			filteredTodos = _.where(filteredTodos, {completed: false});
+			filteredTodos = _.where(filteredTodos, {
+				completed: false
+			});
 		}
 	}
 
@@ -37,7 +41,9 @@ app.get('/todos', function(req, res) {
 app.get('/todos/:id', function(req, res) {
 	var todoID = parseInt(req.params.id, 10);
 
-	matchedTodo = _.findWhere(todos, {id: todoID});
+	matchedTodo = _.findWhere(todos, {
+		id: todoID
+	});
 
 	if (matchedTodo) {
 		res.json(matchedTodo);
@@ -57,7 +63,7 @@ app.post('/todos', function(req, res) {
 
 	body.id = todoNextId++;
 	var length = todos.push(body);
-	
+
 	console.log("There are now " + length + " todos");
 	res.json(body);
 });
@@ -66,13 +72,17 @@ app.post('/todos', function(req, res) {
 app.delete('/todos/:id', function(req, res) {
 	var todoID = parseInt(req.params.id, 10);
 
-	var matchedTodo = _.findWhere(todos, {id: todoID});
+	var matchedTodo = _.findWhere(todos, {
+		id: todoID
+	});
 
 	if (matchedTodo) {
 		todos = _.without(todos, matchedTodo);
 		res.json(matchedTodo);
 	} else {
-		res.status(404).json({error: "no todo found with that id"});
+		res.status(404).json({
+			error: "no todo found with that id"
+		});
 	}
 });
 
@@ -82,14 +92,18 @@ app.put('/todos/:id', function(req, res) {
 	var todoID = parseInt(req.params.id, 10);
 	var body = _.pick(req.body, 'description', 'completed');
 	var validAttributes = {};
-	var matchedTodo = _.findWhere(todos, {id: todoID});
+	var matchedTodo = _.findWhere(todos, {
+		id: todoID
+	});
 
 	if (!matchedTodo) {
 		return res.status(404).send();
 	}
-	
+
 	console.log("Here 1");
+
 	console.log(body);
+
 	if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
 		validAttributes.completed = body.completed;
 	} else if (body.hasOwnProperty('completed')) {
