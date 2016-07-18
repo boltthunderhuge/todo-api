@@ -15,28 +15,34 @@ app.get('/', function(req, res) {
 });
 
 app.get('/todos', function(req, res) {
-	var queryParams = req.query;
-	var filteredTodos = todos;
+	var query = req.query;
+	var where = {};
 
-	if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
-		filteredTodos = _.filter(filteredTodos, function(todo) {
-			return todo.description.toLowerCase().includes(queryParams.q.toLowerCase());
-		});
+	if (query.hasOwnProperty('q') && query.q.length > 0) {
+		where.description = {
+			like: '%' + query.q + '%'
+		};
 	}
 
-	if (queryParams.hasOwnProperty('completed')) {
-		if (queryParams.completed === 'true') {
-			filteredTodos = _.where(filteredTodos, {
-				completed: true
-			});
-		} else if (queryParams.completed === 'false') {
-			filteredTodos = _.where(filteredTodos, {
-				completed: false
-			});
+	if (query.hasOwnProperty('completed')) {
+		if (query.completed === 'true') {
+			where.completed = true;
+		} else if (query.completed === 'false') {
+			where.completed = false;
 		}
 	}
 
-	res.json(filteredTodos);
+	db.todo.findAll({
+		where: where
+	}).then(function(todos) {
+		if (todos) {
+			res.json(todos);
+		} else {
+			res.sendStatus(404);
+		}
+	}, function(error) {
+		res.status(500).json(error);
+	});
 });
 
 app.get('/todos/:id', function(req, res) {
@@ -51,35 +57,23 @@ app.get('/todos/:id', function(req, res) {
 	}, function(error) {
 		res.status(500).json(error);
 	});
-
 });
+
 
 app.post('/todos', function(req, res) {
 	// Pare the object down to the keys we want
 	var body = _.pick(req.body, 'description', 'completed');
 
 	// Validation now performed by db?
-	db.todo.create({description: body.description, completed: body.completed}).
-		then(function(todo) {
-			res.json(todo.toJSON());
-		}, function(error){
-			res.status(400).json(error);
-		});
-
-
-
-	/*// Check the remaining keys
-	if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
-		return res.status(400).send();
-	}
-
-	body.description = body.description.trim();
-
-	body.id = todoNextId++;
-	var length = todos.push(body);
-
-	console.log("There are now " + length + " todos");
-	res.json(body);*/
+	db.todo.create({
+		description: body.description,
+		completed: body.completed
+	}).
+	then(function(todo) {
+		res.json(todo.toJSON());
+	}, function(error) {
+		res.status(400).json(error);
+	});
 });
 
 // DELETE /todos/:id
