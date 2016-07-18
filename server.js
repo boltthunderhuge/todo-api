@@ -3,6 +3,7 @@ var app = express();
 var PORT = process.env.PORT || 3000;
 var bodyParser = require('body-parser');
 var _ = require('underscore');
+var db = require('./db.js');
 
 var todos = [];
 var todoNextId = 1;
@@ -53,8 +54,20 @@ app.get('/todos/:id', function(req, res) {
 });
 
 app.post('/todos', function(req, res) {
+	// Pare the object down to the keys we want
 	var body = _.pick(req.body, 'description', 'completed');
 
+	// Validation now performed by db?
+	db.todo.create({description: body.description, completed: body.completed}).
+		then(function(todo) {
+			res.json(todo.toJSON());
+		}, function(error){
+			res.status(400).json(error);
+		});
+
+
+
+	/*// Check the remaining keys
 	if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
 		return res.status(400).send();
 	}
@@ -65,7 +78,7 @@ app.post('/todos', function(req, res) {
 	var length = todos.push(body);
 
 	console.log("There are now " + length + " todos");
-	res.json(body);
+	res.json(body);*/
 });
 
 // DELETE /todos/:id
@@ -126,6 +139,9 @@ app.put('/todos/:id', function(req, res) {
 	res.json(matchedTodo);
 });
 
-app.listen(PORT, function() {
-	console.log("Express listening on PORT : " + PORT);
+
+db.sequelize.sync().then(function() {
+	app.listen(PORT, function() {
+		console.log("Express listening on PORT : " + PORT);
+	});
 });
