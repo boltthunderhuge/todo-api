@@ -29,14 +29,11 @@ sequelize.sync({
 			id: 3
 		}
 	}).then(function(todo) {
-		if (todo) {
-			console.log(todo.toJSON());
-		} else {
-			console.log("record with id 2 not found");
-		}
+		console.log('shit destroyed');
 	}).catch(function(error) {
 		console.log("Problem: " + error);
 	});
+	
 	/*Todo.create({
 		description: 'Take out sproog'
 	}).then(function(todo) {
