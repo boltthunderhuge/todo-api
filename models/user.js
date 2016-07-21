@@ -66,6 +66,38 @@ module.exports = function(sequelize, DataTypes) {
 						return reject();
 					});
 				});
+			},
+			findByToken: function(token) {
+				console.log("HURGH!?");
+
+				return new Promise(function(resolve, reject) {
+					console.log("PRE-PRE-FUCKER");
+					try{
+						console.log("PRE-FUCKER");
+						// First, decode the payload if valid
+						var decodedJWT = jwt.verify(token, 'qwerty098');
+						// Second, decrypt
+						var bytes = cryptojs.AES.decrypt(decodedJWT.token, 'abc123!@#');
+						// third, get our object back from the stringified version (turning the string version of the decrypted token into a ut8 string)
+						var tokenData = JSON.parse(bytes.toString(cryptojs.enc.Utf8));
+						
+						console.log("FUCKER");
+						console.log(tokenData);
+
+						user.findById(tokenData.id).then(function(user) {
+							if (user) {
+								resolve(user);
+							} else {
+								reject();
+							}
+						}, function() {
+							reject();
+						});
+					} catch(error) {
+						console.log(error);
+						reject();
+					}
+				});
 			}
 		},
 		instanceMethods: {
@@ -78,7 +110,7 @@ module.exports = function(sequelize, DataTypes) {
 					return undefined;
 				}
 				try {
-					var stringData = "graeme";//JSON.stringify({id: this.get('id'), type: tokenType});
+					var stringData = JSON.stringify({id: this.get('id'), type: tokenType});
 					var encryptedData = cryptojs.AES.encrypt(stringData, 'abc123!@#');
 					var token = jwt.sign({
 						token: encryptedData.toString()
