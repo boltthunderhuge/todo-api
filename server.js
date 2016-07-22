@@ -67,12 +67,12 @@ app.post('/todos',  middleware.requireAuthentication, function(req, res) {
 	var body = _.pick(req.body, 'description', 'completed');
 
 	// Validation now performed by db?
-	db.todo.create({
-		description: body.description,
-		completed: body.completed
-	}).
-	then(function(todo) {
-		res.json(todo.toJSON());
+	db.todo.create(body).then(function(todo) {
+		req.user.addTodo(todo).then(function() {
+			return todo.reload(); // todo has been changed because of the added association - need to refresh
+		}).then(function(todo) {
+			res.json(todo.toJSON());
+		});
 	}, function(error) {
 		res.status(400).json(error);
 	});

@@ -3,8 +3,6 @@ module.exports = function(db) {
 		requireAuthentication: function(req, res, next) {
 			var token = req.get('Auth');
 
-console.log("fuckcheese");
-
 			db.user.findByToken(token).then(function(user) {
 				req.user = user;
 				next();
