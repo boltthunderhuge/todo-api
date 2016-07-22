@@ -18,7 +18,10 @@ app.get('/', function(req, res) {
 
 app.get('/todos', middleware.requireAuthentication, function(req, res) {
 	var query = req.query;
-	var where = {};
+	var where = {
+		userId: req.user.id
+	};
+
 
 	if (query.hasOwnProperty('q') && query.q.length > 0) {
 		where.description = {
@@ -50,7 +53,7 @@ app.get('/todos', middleware.requireAuthentication, function(req, res) {
 app.get('/todos/:id',  middleware.requireAuthentication, function(req, res) {
 	var todoID = parseInt(req.params.id, 10);
 
-	db.todo.findById(todoID).then(function(todo) {
+	db.todo.findOne({where: {id:todoID, userId:req.user.id}}).then(function(todo) {
 		if (!!todo) {
 			res.status(200).json(todo.toJSON());
 		} else {
@@ -84,7 +87,8 @@ app.delete('/todos/:id',  middleware.requireAuthentication, function(req, res) {
 
 	db.todo.destroy({
 		where: {
-			id: todoID
+			id: todoID,
+			userId: req.user.id
 		}
 	}).then(function(numDestroyedRows) {
 		console.log('Destroyed ' + numDestroyedRows + ' rows');
@@ -117,7 +121,7 @@ app.put('/todos/:id', middleware.requireAuthentication, function(req, res) {
 		attributes.description = body.description;
 	}
 
-	db.todo.findById(todoID).then(function(todo) {
+	db.todo.findOne({where: {id: todoID, userId: req.user.id}}).then(function(todo) {
 		if (todo) {
 			todo.update(attributes).then(function(todo) {
 				res.json(todo.toJSON());
@@ -163,7 +167,9 @@ app.post('/users/login', function(req, res) {
 	});
 });
 
-db.sequelize.sync( {force: true} ).then(function() {
+db.sequelize.sync( 
+	//{force: true} 
+	).then(function() {
 	app.listen(PORT, function() {
 		console.log("Express listening on PORT : " + PORT);
 	});
