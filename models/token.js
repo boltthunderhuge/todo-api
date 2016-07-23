@@ -9,6 +9,7 @@ module.exports = function(sequelize, DataTypes) {
 				len: [1]
 			},
 			set: function(value) {
+
 				var hash = cryptojs.MD5(value).toString();
 
 				this.setDataValue('token', value);

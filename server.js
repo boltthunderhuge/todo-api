@@ -50,10 +50,15 @@ app.get('/todos', middleware.requireAuthentication, function(req, res) {
 	});
 });
 
-app.get('/todos/:id',  middleware.requireAuthentication, function(req, res) {
+app.get('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	var todoID = parseInt(req.params.id, 10);
 
-	db.todo.findOne({where: {id:todoID, userId:req.user.id}}).then(function(todo) {
+	db.todo.findOne({
+		where: {
+			id: todoID,
+			userId: req.user.id
+		}
+	}).then(function(todo) {
 		if (!!todo) {
 			res.status(200).json(todo.toJSON());
 		} else {
@@ -65,12 +70,14 @@ app.get('/todos/:id',  middleware.requireAuthentication, function(req, res) {
 });
 
 
-app.post('/todos',  middleware.requireAuthentication, function(req, res) {
+app.post('/todos', middleware.requireAuthentication, function(req, res) {
 	// Pare the object down to the keys we want
 	var body = _.pick(req.body, 'description', 'completed');
 
+console.log("HERE1");
 	// Validation now performed by db?
 	db.todo.create(body).then(function(todo) {
+		console.log("HERE2");
 		req.user.addTodo(todo).then(function() {
 			return todo.reload(); // todo has been changed because of the added association - need to refresh
 		}).then(function(todo) {
@@ -82,7 +89,7 @@ app.post('/todos',  middleware.requireAuthentication, function(req, res) {
 });
 
 // DELETE /todos/:id
-app.delete('/todos/:id',  middleware.requireAuthentication, function(req, res) {
+app.delete('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	var todoID = parseInt(req.params.id, 10);
 
 	db.todo.destroy({
@@ -121,7 +128,12 @@ app.put('/todos/:id', middleware.requireAuthentication, function(req, res) {
 		attributes.description = body.description;
 	}
 
-	db.todo.findOne({where: {id: todoID, userId: req.user.id}}).then(function(todo) {
+	db.todo.findOne({
+		where: {
+			id: todoID,
+			userId: req.user.id
+		}
+	}).then(function(todo) {
 		if (todo) {
 			todo.update(attributes).then(function(todo) {
 				res.json(todo.toJSON());
@@ -153,23 +165,36 @@ app.post('/users', function(req, res) {
 
 app.post('/users/login', function(req, res) {
 	var body = _.pick(req.body, 'email', 'password');
+	var userInstance;
 
 	db.user.authenticate(body).then(function(user) {
 		var token = user.generateToken('authentication');
-		if (token) {
-			res.header('Auth', token).json(user.toPublicJSON());
-		} else {
-			res.status(401).send();
-		}
+		userInstance = user;
 
-	}, function(error) {
+		return db.token.create({
+			token: token
+		});
+	}).then(function(tokenInstance) {
+		res.header('Auth', tokenInstance.token).json(userInstance.toPublicJSON());
+	}).catch(function(e) {
+		console.log("FUCK BEANS: " + e);
 		res.status(401).send();
 	});
 });
 
-db.sequelize.sync( 
-	{force: true} 
-	).then(function() {
+
+app.delete('/users/login', middleware.requireAuthentication, function(req, res) {
+	req.token.destroy().then (function() {
+		res.status(204).send();
+	}).catch(function(error) {
+		console.log(error);
+		res.status(500).send();
+	});
+});
+
+db.sequelize.sync({
+	force: true
+}).then(function() {
 	app.listen(PORT, function() {
 		console.log("Express listening on PORT : " + PORT);
 	});
